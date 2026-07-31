@@ -1,6 +1,6 @@
-# Exchange Rates API
+# Exchange Rates API (dinar-now)
 
-Laravel 12 REST API that stores and serves currency exchange rates from SQLite, with caching, CORS, and rate limiting.
+Laravel 12 REST API that stores and serves currency exchange rates for the **dinar-now** frontend. Uses SQLite, caching, CORS, and rate limiting.
 
 ## Requirements
 
