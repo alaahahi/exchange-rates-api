@@ -4,7 +4,7 @@
 
 @section('content')
     <h1 class="page-title">الإعدادات</h1>
-    <p class="muted" style="margin-top:-0.5rem;margin-bottom:1rem;">هوية الموقع وتشغيل تحديثات قاعدة البيانات.</p>
+    <p class="muted" style="margin-top:-0.5rem;margin-bottom:1rem;">هوية الموقع، السجلات، والمايغريشن.</p>
 
     <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
         <div class="card" style="text-align:center;">
@@ -32,6 +32,22 @@
                 البث الحي: <strong>{{ $liveEnabled ? 'مفعّل' : 'متوقف' }}</strong>
                 · الكاش: <strong>{{ $cacheTtl }} ثانية</strong>
             </p>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:0.85rem;" id="analytics">
+        <p class="label">Google Analytics</p>
+        <p class="muted" style="margin:0.5rem 0 0;font-size:0.9rem;line-height:1.7;">
+            Measurement ID:
+            <strong style="direction:ltr;display:inline-block;">{{ $gaMeasurementId ?: '—' }}</strong>
+        </p>
+        <p class="muted" style="margin:0.55rem 0 0;font-size:0.85rem;line-height:1.7;">
+            نعم يمكن عرض إحصائيات غوغل داخل الأدمن، لكن يحتاج ربط
+            <strong>GA4 Data API</strong>
+            (حساب خدمة + صلاحيات على الـ Property). حالياً يمكنك فتح لوحة غوغل مباشرة:
+        </p>
+        <div class="row-actions" style="margin-top:0.85rem;flex-wrap:wrap;">
+            <a class="btn" href="{{ $gaDashboardUrl }}" target="_blank" rel="noopener noreferrer">فتح Google Analytics</a>
         </div>
     </div>
 
@@ -65,11 +81,50 @@
         @endif
 
         @if (session('migrate_output'))
-            <pre style="margin:1rem 0 0;padding:0.85rem 1rem;border-radius:0.85rem;background:var(--surface, #f3f4f8);border:1px solid var(--line);font-size:0.78rem;white-space:pre-wrap;direction:ltr;text-align:start;">{{ session('migrate_output') }}</pre>
+            <pre class="log-box">{{ session('migrate_output') }}</pre>
         @endif
     </div>
 
+    <div class="card" style="margin-top:0.85rem;" id="logs">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;">
+            <div>
+                <p class="label" style="margin:0;">سجل الأخطاء</p>
+                <p class="muted" style="margin:0.4rem 0 0;font-size:0.85rem;">
+                    @if ($log['exists'])
+                        الحجم: <strong>{{ $log['size_label'] }}</strong>
+                        · آخر تعديل: <strong>{{ $log['modified_at'] }}</strong>
+                        · أسطر معروضة تقريباً: <strong>{{ $log['lines'] }}</strong>
+                    @else
+                        لا يوجد ملف سجل بعد.
+                    @endif
+                </p>
+            </div>
+            <form method="POST" action="{{ route('admin.settings.logs.clear') }}" onsubmit="return confirm('تفريغ laravel.log بالكامل؟');">
+                @csrf
+                <button class="btn btn-ghost" type="submit" style="color:var(--down);border-color:#f5c2c0;" @if (! $log['exists'] || $log['size'] === 0) disabled @endif>
+                    تفريغ السجل
+                </button>
+            </form>
+        </div>
+
+        <pre class="log-box" style="max-height:420px;overflow:auto;">{{ $log['content'] !== '' ? $log['content'] : 'السجل فارغ.' }}</pre>
+        <p class="muted" style="margin:0.55rem 0 0;font-size:0.75rem;direction:ltr;text-align:start;">{{ $log['path'] }}</p>
+    </div>
+
     <style>
+        .log-box {
+            margin: 1rem 0 0;
+            padding: 0.85rem 1rem;
+            border-radius: 0.85rem;
+            background: #0b1220;
+            color: #d7e0ef;
+            border: 1px solid #334560;
+            font-size: 0.75rem;
+            white-space: pre-wrap;
+            direction: ltr;
+            text-align: start;
+            line-height: 1.45;
+        }
         .migrate-toggle {
             display: inline-flex;
             align-items: center;

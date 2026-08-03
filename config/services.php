@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'google' => [
+        'measurement_id' => env('GA_MEASUREMENT_ID', 'G-FE8ZSPQ6G2'),
+        'analytics_url' => env('GA_DASHBOARD_URL', 'https://analytics.google.com/analytics/web/'),
+    ],
+
 ];

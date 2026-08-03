@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\Admin\LogViewerService;
 use App\Services\Admin\SettingsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -12,6 +13,7 @@ class SettingsController extends Controller
 {
     public function __construct(
         private readonly SettingsService $settings,
+        private readonly LogViewerService $logs,
     ) {}
 
     public function index(): View
@@ -27,6 +29,9 @@ class SettingsController extends Controller
             'sourceLabel' => config('exchange.live.source_label'),
             'cacheTtl' => (int) config('exchange.cache_ttl', 120),
             'liveEnabled' => (bool) config('exchange.live.enabled', true),
+            'log' => $this->logs->summary(),
+            'gaMeasurementId' => (string) config('services.google.measurement_id'),
+            'gaDashboardUrl' => (string) config('services.google.analytics_url'),
         ]);
     }
 
@@ -45,5 +50,16 @@ class SettingsController extends Controller
         return back()
             ->with('success', $message)
             ->with('migrate_output', $result['output']);
+    }
+
+    public function clearLogs(): RedirectResponse
+    {
+        try {
+            $this->logs->clear();
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', 'تم تفريغ سجل الأخطاء.');
     }
 }

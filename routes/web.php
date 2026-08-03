@@ -32,5 +32,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
         Route::post('/settings/migrate', [SettingsController::class, 'migrate'])->name('settings.migrate');
+        Route::post('/settings/logs/clear', [SettingsController::class, 'clearLogs'])->name('settings.logs.clear');
     });
 });
