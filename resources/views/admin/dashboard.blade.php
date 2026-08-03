@@ -40,11 +40,12 @@
         </div>
     </div>
 
-    <div class="card" style="margin-top:0.85rem;">
-        <p class="label">اختصارات</p>
-        <div class="row-actions" style="margin-top:0.75rem;">
-            <a class="btn" href="{{ route('admin.exchange-rates.index') }}">تعديل أسعار الصرف</a>
-            <a class="btn btn-ghost" href="{{ route('admin.gold-rates.index') }}">تعديل أسعار الذهب</a>
+        <div class="card">
+            <p class="label">اختصارات</p>
+            <div class="row-actions" style="margin-top:0.75rem;flex-wrap:wrap;">
+                <a class="btn" href="{{ route('admin.exchange-rates.index') }}">تعديل أسعار الصرف</a>
+                <a class="btn btn-ghost" href="{{ route('admin.gold-rates.index') }}">تعديل أسعار الذهب</a>
+                <a class="btn btn-ghost" href="{{ route('admin.users.index') }}">المستخدمون</a>
+            </div>
         </div>
-    </div>
 @endsection

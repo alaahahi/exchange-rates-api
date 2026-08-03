@@ -180,6 +180,7 @@
                 <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'is-active' : '' }}">الرئيسية</a>
                 <a href="{{ route('admin.exchange-rates.index') }}" class="{{ request()->routeIs('admin.exchange-rates.*') ? 'is-active' : '' }}">أسعار الصرف</a>
                 <a href="{{ route('admin.gold-rates.index') }}" class="{{ request()->routeIs('admin.gold-rates.*') ? 'is-active' : '' }}">الذهب</a>
+                <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'is-active' : '' }}">المستخدمون</a>
                 <form method="POST" action="{{ route('admin.logout') }}">
                     @csrf
                     <button type="submit">خروج</button>
