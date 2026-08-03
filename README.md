@@ -91,6 +91,15 @@ CORS allows only `FRONTEND_URL` (no `*` in production config).
 
 `ExchangeRateService` uses `Cache::remember` with key `exchange_rates.active` and TTL from `EXCHANGE_RATES_CACHE_TTL`.
 
+## Shared hosting (document root = project root)
+
+If the host cannot point to `public/`, the project root includes:
+
+- `index.php` — front controller (uses `public/` as asset path)
+- `.htaccess` — rewrites static files to `public/` and blocks sensitive folders
+
+Upload the whole API folder, then open the domain root. Prefer pointing the vhost to `public/` when the host allows it.
+
 ## Admin dashboard
 
 Branded admin panel (dinar-now logo / navy + gold):
