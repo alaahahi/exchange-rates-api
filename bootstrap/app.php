@@ -19,6 +19,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectUsersTo(fn () => route('admin.dashboard'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->reportable(function (\Throwable $e): void {
+            if (app()->bound(\App\Monitor\Services\ExceptionMonitor::class)) {
+                app(\App\Monitor\Services\ExceptionMonitor::class)->log($e);
+            }
+        });
+
         $exceptions->shouldRenderJsonWhen(function (Request $request) {
             return $request->is('api/*') || $request->expectsJson();
         });
