@@ -99,12 +99,14 @@
                     @endif
                 </p>
             </div>
-            <form method="POST" action="{{ route('admin.settings.logs.clear') }}" onsubmit="return confirm('تفريغ laravel.log بالكامل؟');">
-                @csrf
-                <button class="btn btn-ghost" type="submit" style="color:var(--down);border-color:#f5c2c0;" @if (! $log['exists'] || $log['size'] === 0) disabled @endif>
-                    تفريغ السجل
-                </button>
-            </form>
+            @if (Route::has('admin.settings.logs.clear'))
+                <form method="POST" action="{{ route('admin.settings.logs.clear') }}" onsubmit="return confirm('تفريغ laravel.log بالكامل؟');">
+                    @csrf
+                    <button class="btn btn-ghost" type="submit" style="color:var(--down);border-color:#f5c2c0;" @if (! $log['exists'] || $log['size'] === 0) disabled @endif>
+                        تفريغ السجل
+                    </button>
+                </form>
+            @endif
         </div>
 
         <pre class="log-box" style="max-height:420px;overflow:auto;">{{ $log['content'] !== '' ? $log['content'] : 'السجل فارغ.' }}</pre>
