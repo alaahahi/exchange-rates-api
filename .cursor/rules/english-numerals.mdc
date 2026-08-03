@@ -1,0 +1,11 @@
+---
+description: Always display numbers with English/Latin digits (0-9), never Arabic-Indic numerals
+alwaysApply: true
+---
+
+# English Numerals (Latin Digits)
+
+All numeric display in API docs, admin UIs, exports, and seed examples for humans must use **Latin digits** (`0-9`).
+
+- Prefer raw numbers in JSON and let the frontend format with `en-US` and `useGrouping: false` (no commas).
+- Never render presentation numbers with thousand separators (`150000` not `150,000`).

@@ -5,17 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
-class ExchangeRate extends Model
+class GoldRate extends Model
 {
     protected $fillable = [
-        'currency_code',
-        'currency_name',
+        'code',
+        'name',
+        'unit',
         'buy_rate',
         'sell_rate',
         'change_percentage',
         'is_active',
         'sort_order',
-        'source',
     ];
 
     protected function casts(): array
@@ -36,6 +36,6 @@ class ExchangeRate extends Model
 
     public function scopeOrdered(Builder $query): Builder
     {
-        return $query->orderBy('sort_order')->orderBy('currency_code');
+        return $query->orderBy('sort_order')->orderBy('code');
     }
 }

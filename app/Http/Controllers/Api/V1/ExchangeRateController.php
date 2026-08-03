@@ -20,6 +20,7 @@ class ExchangeRateController extends Controller
         return response()
             ->json([
                 'success' => true,
+                'meta' => $this->exchangeRateService->sourceMeta(),
                 'data' => ExchangeRateResource::collection($rates)->resolve(),
             ])
             ->header('Cache-Control', 'public, max-age=30');

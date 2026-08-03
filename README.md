@@ -78,7 +78,9 @@ Expected shape:
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/v1/exchange-rates` | Active rates (cached) |
+| GET | `/api/v1/exchange-rates` | Active currency rates (cached) |
+| GET | `/api/v1/gold-rates` | Active gold rates (cached) |
+| GET | `/api/v1/market-summary` | Market open/closed + USD spread |
 | GET | `/up` | Health check |
 
 Rate limit: 60 requests / minute / IP (`throttle:api`).
@@ -88,6 +90,23 @@ CORS allows only `FRONTEND_URL` (no `*` in production config).
 ## Caching
 
 `ExchangeRateService` uses `Cache::remember` with key `exchange_rates.active` and TTL from `EXCHANGE_RATES_CACHE_TTL`.
+
+## Admin dashboard
+
+Branded admin panel (dinar-now logo / navy + gold):
+
+- Web UI: `/admin/login`
+- Demo user: `admin@dinar.local` / `password`
+- Sanctum API auth (same pattern as CRM projects):
+  - `POST /api/v1/auth/login`
+  - `POST /api/v1/auth/logout`
+  - `GET /api/v1/auth/me`
+
+Seed admin:
+
+```bash
+php artisan db:seed --class=AdminUserSeeder --force
+```
 
 ## Production deployment
 
