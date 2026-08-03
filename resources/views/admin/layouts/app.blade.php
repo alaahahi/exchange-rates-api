@@ -181,7 +181,9 @@
                 <a href="{{ route('admin.exchange-rates.index') }}" class="{{ request()->routeIs('admin.exchange-rates.*') ? 'is-active' : '' }}">أسعار الصرف</a>
                 <a href="{{ route('admin.gold-rates.index') }}" class="{{ request()->routeIs('admin.gold-rates.*') ? 'is-active' : '' }}">الذهب</a>
                 <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'is-active' : '' }}">المستخدمون</a>
-                <a href="{{ route('admin.settings.index') }}" class="{{ request()->routeIs('admin.settings.*') ? 'is-active' : '' }}">الإعدادات</a>
+                @if (Route::has('admin.settings.index'))
+                    <a href="{{ route('admin.settings.index') }}" class="{{ request()->routeIs('admin.settings.*') ? 'is-active' : '' }}">الإعدادات</a>
+                @endif
                 <form method="POST" action="{{ route('admin.logout') }}">
                     @csrf
                     <button type="submit">خروج</button>

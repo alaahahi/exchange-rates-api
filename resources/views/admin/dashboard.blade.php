@@ -77,7 +77,9 @@
             <a class="btn" href="{{ route('admin.exchange-rates.index') }}">تعديل أسعار الصرف</a>
             <a class="btn btn-ghost" href="{{ route('admin.gold-rates.index') }}">تعديل أسعار الذهب</a>
                 <a class="btn btn-ghost" href="{{ route('admin.users.index') }}">المستخدمون</a>
-                <a class="btn btn-ghost" href="{{ route('admin.settings.index') }}">الإعدادات</a>
+                @if (Route::has('admin.settings.index'))
+                    <a class="btn btn-ghost" href="{{ route('admin.settings.index') }}">الإعدادات</a>
+                @endif
+            </div>
         </div>
-    </div>
 @endsection
