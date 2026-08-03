@@ -4,7 +4,120 @@
 
 @section('content')
     <h1 class="page-title">الإعدادات</h1>
-    <p class="muted" style="margin-top:-0.5rem;margin-bottom:1rem;">هوية الموقع، السجلات، والمايغريشن.</p>
+    <p class="muted" style="margin-top:-0.5rem;margin-bottom:1rem;">هوية الموقع، إحصائيات غوغل، السجلات، والمايغريشن.</p>
+
+    <div class="card" id="analytics" style="margin-bottom:0.85rem;">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.75rem;">
+            <div>
+                <p class="label" style="margin:0;">Google Analytics — الشارت</p>
+                <p class="muted" style="margin:0.35rem 0 0;font-size:0.85rem;">
+                    Measurement ID:
+                    <strong style="direction:ltr;display:inline-block;">{{ $ga['measurement_id'] ?: '—' }}</strong>
+                </p>
+            </div>
+        </div>
+
+        @if ($ga['mode'] === 'embed' && $ga['embed_url'])
+            <div style="margin-top:1rem;border-radius:1rem;overflow:hidden;border:1px solid var(--line);background:#fff;">
+                <iframe
+                    src="{{ $ga['embed_url'] }}"
+                    title="Google Analytics charts"
+                    style="width:100%;min-height:520px;border:0;display:block;"
+                    loading="lazy"
+                    allowfullscreen
+                ></iframe>
+            </div>
+        @elseif ($ga['mode'] === 'api')
+            <div class="grid" style="margin-top:1rem;grid-template-columns:repeat(3,minmax(0,1fr));">
+                <div class="card" style="box-shadow:none;">
+                    <p class="label">المستخدمون (7 أيام)</p>
+                    <p class="value">{{ number_format($ga['totals']['active_users'], 0, '.', '') }}</p>
+                </div>
+                <div class="card" style="box-shadow:none;">
+                    <p class="label">الجلسات</p>
+                    <p class="value">{{ number_format($ga['totals']['sessions'], 0, '.', '') }}</p>
+                </div>
+                <div class="card" style="box-shadow:none;">
+                    <p class="label">مشاهدات الصفحات</p>
+                    <p class="value">{{ number_format($ga['totals']['page_views'], 0, '.', '') }}</p>
+                </div>
+            </div>
+            <div style="margin-top:1rem;background:#fff;border:1px solid var(--line);border-radius:1rem;padding:0.75rem;">
+                <canvas id="ga-traffic-chart" height="110"></canvas>
+            </div>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+            <script>
+                (function () {
+                    var labels = @json($ga['labels']);
+                    var users = @json($ga['active_users']);
+                    var sessions = @json($ga['sessions']);
+                    var views = @json($ga['page_views']);
+                    var ctx = document.getElementById('ga-traffic-chart');
+                    if (!ctx || !window.Chart) return;
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    label: 'المستخدمون',
+                                    data: users,
+                                    borderColor: '#0D2149',
+                                    backgroundColor: 'rgba(13,33,73,0.12)',
+                                    tension: 0.3,
+                                    fill: true,
+                                },
+                                {
+                                    label: 'الجلسات',
+                                    data: sessions,
+                                    borderColor: '#C29953',
+                                    backgroundColor: 'rgba(194,153,83,0.12)',
+                                    tension: 0.3,
+                                    fill: true,
+                                },
+                                {
+                                    label: 'المشاهدات',
+                                    data: views,
+                                    borderColor: '#1a7a4c',
+                                    backgroundColor: 'rgba(26,122,76,0.10)',
+                                    tension: 0.3,
+                                    fill: false,
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { position: 'bottom' }
+                            },
+                            scales: {
+                                y: { beginAtZero: true, ticks: { precision: 0 } }
+                            }
+                        }
+                    });
+                })();
+            </script>
+        @else
+            <div style="margin-top:1rem;padding:1rem;border-radius:1rem;border:1px dashed var(--line);background:var(--surface,#f3f4f8);">
+                <p style="margin:0;font-weight:700;">لتظهر الشارت هنا (بدون تحويل لصفحة غوغل):</p>
+                <ol style="margin:0.75rem 0 0;padding-inline-start:1.2rem;color:var(--muted);font-size:0.9rem;line-height:1.8;">
+                    <li>
+                        <strong>الأسهل:</strong> من Looker Studio اعمل تقرير مربوط بـ GA4 → File → Embed report → انسخ الرابط وضعه في
+                        <code>GA_EMBED_URL</code>
+                    </li>
+                    <li>
+                        <strong>أو API:</strong> أنشئ Service Account في Google Cloud، فعّل Analytics Data API، أضف الإيميل Viewer على الـ Property، ثم ضع:
+                        <code>GA_PROPERTY_ID</code>
+                        وملف JSON في
+                        <code>storage/app/google/service-account.json</code>
+                    </li>
+                </ol>
+                @if ($ga['error'])
+                    <p class="muted" style="margin:0.85rem 0 0;font-size:0.85rem;color:var(--down);">{{ $ga['error'] }}</p>
+                @endif
+            </div>
+        @endif
+    </div>
 
     <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
         <div class="card" style="text-align:center;">
@@ -32,22 +145,6 @@
                 البث الحي: <strong>{{ $liveEnabled ? 'مفعّل' : 'متوقف' }}</strong>
                 · الكاش: <strong>{{ $cacheTtl }} ثانية</strong>
             </p>
-        </div>
-    </div>
-
-    <div class="card" style="margin-top:0.85rem;" id="analytics">
-        <p class="label">Google Analytics</p>
-        <p class="muted" style="margin:0.5rem 0 0;font-size:0.9rem;line-height:1.7;">
-            Measurement ID:
-            <strong style="direction:ltr;display:inline-block;">{{ $gaMeasurementId ?: '—' }}</strong>
-        </p>
-        <p class="muted" style="margin:0.55rem 0 0;font-size:0.85rem;line-height:1.7;">
-            نعم يمكن عرض إحصائيات غوغل داخل الأدمن، لكن يحتاج ربط
-            <strong>GA4 Data API</strong>
-            (حساب خدمة + صلاحيات على الـ Property). حالياً يمكنك فتح لوحة غوغل مباشرة:
-        </p>
-        <div class="row-actions" style="margin-top:0.85rem;flex-wrap:wrap;">
-            <a class="btn" href="{{ $gaDashboardUrl }}" target="_blank" rel="noopener noreferrer">فتح Google Analytics</a>
         </div>
     </div>
 
@@ -176,6 +273,11 @@
         .migrate-toggle input:focus-visible + .migrate-toggle__track {
             outline: 2px solid var(--gold);
             outline-offset: 2px;
+        }
+        @media (max-width: 800px) {
+            #analytics .grid {
+                grid-template-columns: 1fr !important;
+            }
         }
     </style>
 @endsection

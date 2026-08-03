@@ -38,6 +38,9 @@ return [
     'google' => [
         'measurement_id' => env('GA_MEASUREMENT_ID', 'G-FE8ZSPQ6G2'),
         'analytics_url' => env('GA_DASHBOARD_URL', 'https://analytics.google.com/analytics/web/'),
+        'property_id' => env('GA_PROPERTY_ID', ''),
+        'credentials_path' => env('GA_CREDENTIALS_JSON', storage_path('app/google/service-account.json')),
+        'embed_url' => env('GA_EMBED_URL', ''),
     ],
 
 ];

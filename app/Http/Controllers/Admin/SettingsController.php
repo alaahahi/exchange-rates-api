@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\Admin\GoogleAnalyticsReportService;
 use App\Services\Admin\LogViewerService;
 use App\Services\Admin\SettingsService;
 use Illuminate\Http\RedirectResponse;
@@ -14,6 +15,7 @@ class SettingsController extends Controller
     public function __construct(
         private readonly SettingsService $settings,
         private readonly LogViewerService $logs,
+        private readonly GoogleAnalyticsReportService $analytics,
     ) {}
 
     public function index(): View
@@ -30,7 +32,7 @@ class SettingsController extends Controller
             'cacheTtl' => (int) config('exchange.cache_ttl', 120),
             'liveEnabled' => (bool) config('exchange.live.enabled', true),
             'log' => $this->logs->summary(),
-            'gaMeasurementId' => (string) config('services.google.measurement_id'),
+            'ga' => $this->analytics->dashboard(7),
             'gaDashboardUrl' => (string) config('services.google.analytics_url'),
         ]);
     }
