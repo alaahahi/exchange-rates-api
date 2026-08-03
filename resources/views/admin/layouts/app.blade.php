@@ -181,6 +181,7 @@
                 <a href="{{ route('admin.exchange-rates.index') }}" class="{{ request()->routeIs('admin.exchange-rates.*') ? 'is-active' : '' }}">أسعار الصرف</a>
                 <a href="{{ route('admin.gold-rates.index') }}" class="{{ request()->routeIs('admin.gold-rates.*') ? 'is-active' : '' }}">الذهب</a>
                 <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'is-active' : '' }}">المستخدمون</a>
+                <a href="{{ route('admin.settings.index') }}" class="{{ request()->routeIs('admin.settings.*') ? 'is-active' : '' }}">الإعدادات</a>
                 <form method="POST" action="{{ route('admin.logout') }}">
                     @csrf
                     <button type="submit">خروج</button>
@@ -192,6 +193,9 @@
     <main class="content">
         @if (session('success'))
             <div class="flash">{{ session('success') }}</div>
+        @endif
+        @if (session('error'))
+            <div class="flash" style="background:#fdecea;color:#b42318;border-color:#f5c2c0;">{{ session('error') }}</div>
         @endif
         @yield('content')
     </main>
