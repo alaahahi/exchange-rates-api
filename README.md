@@ -100,6 +100,16 @@ If the host cannot point to `public/`, the project root includes:
 
 Upload the whole API folder, then open the domain root. Prefer pointing the vhost to `public/` when the host allows it.
 
+## Live source (Qamar)
+
+Default provider is **قمر الفجر** (`EXCHANGE_RATE_PROVIDER=qamar`):
+
+```bash
+php artisan rates:sync --force
+```
+
+Server cache / sync TTL: **120 seconds**. Scheduler: every 2 minutes.
+
 ## Admin dashboard
 
 Branded admin panel (dinar-now logo / navy + gold):

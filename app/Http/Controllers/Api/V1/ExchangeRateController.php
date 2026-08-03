@@ -23,6 +23,6 @@ class ExchangeRateController extends Controller
                 'meta' => $this->exchangeRateService->sourceMeta(),
                 'data' => ExchangeRateResource::collection($rates)->resolve(),
             ])
-            ->header('Cache-Control', 'public, max-age=30');
+            ->header('Cache-Control', 'public, max-age=120');
     }
 }

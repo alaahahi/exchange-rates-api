@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Contracts\ExchangeRateProvider;
 use App\Models\ExchangeRate;
 use App\Services\RateProviders\OpenErApiProvider;
+use App\Services\RateProviders\QamarAlFajrProvider;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -23,9 +24,10 @@ class SyncExchangeRatesService
 
     public function provider(): ExchangeRateProvider
     {
-        $name = (string) config('exchange.live.provider', 'open_er_api');
+        $name = (string) config('exchange.live.provider', 'qamar');
 
         return match ($name) {
+            'qamar' => app(QamarAlFajrProvider::class),
             'open_er_api' => app(OpenErApiProvider::class),
             default => throw new InvalidArgumentException("Unknown exchange rate provider [{$name}]."),
         };
@@ -37,7 +39,7 @@ class SyncExchangeRatesService
             return false;
         }
 
-        $ttl = (int) config('exchange.live.sync_ttl', 300);
+        $ttl = (int) config('exchange.live.sync_ttl', 120);
         $lastAt = $this->asCarbon(Cache::get(self::LAST_SYNC_CACHE_KEY));
 
         if (! $force && $lastAt !== null && $lastAt->diffInSeconds(now()) < $ttl) {
@@ -74,7 +76,7 @@ class SyncExchangeRatesService
      */
     public function sync(bool $forceRefresh = false): array
     {
-        $ttl = (int) config('exchange.live.sync_ttl', 300);
+        $ttl = (int) config('exchange.live.sync_ttl', 120);
 
         $payload = $forceRefresh ? null : Cache::get(self::RAW_CACHE_KEY);
 
@@ -83,17 +85,104 @@ class SyncExchangeRatesService
             Cache::put(self::RAW_CACHE_KEY, $payload, $ttl);
         }
 
+        $source = (string) ($payload['source'] ?? 'live');
+        $updated = 0;
+
+        if (isset($payload['board_rates']) && is_array($payload['board_rates'])) {
+            $updated = $this->persistBoardRates($payload['board_rates'], $source);
+        } else {
+            $updated = $this->persistMidRates($payload['rates'] ?? [], $source);
+        }
+
+        $this->exchangeRateService->clearCache();
+        Cache::put(self::LAST_SYNC_CACHE_KEY, now(), $ttl * 2);
+
+        return [
+            'source' => $source,
+            'source_label' => (string) ($payload['source_label'] ?? config('exchange.live.source_label')),
+            'updated' => $updated,
+            'fetched_at' => $payload['fetched_at'] ?? now()->toIso8601String(),
+        ];
+    }
+
+    /**
+     * @param  array<string, array{buy: float|int|string, sell: float|int|string}>  $boardRates
+     */
+    private function persistBoardRates(array $boardRates, string $source): int
+    {
+        $priority = config('exchange.live.priority', []);
+        $names = config('exchange.currency_names', []);
+        $updated = 0;
+        $activeCodes = [];
+
+        DB::transaction(function () use ($boardRates, $source, $priority, $names, &$updated, &$activeCodes) {
+            ExchangeRate::query()->where('currency_code', 'IQD')->delete();
+
+            foreach ($boardRates as $code => $row) {
+                $code = strtoupper((string) $code);
+                if ($code === 'IQD') {
+                    continue;
+                }
+
+                $buy = (float) ($row['buy'] ?? 0);
+                $sell = (float) ($row['sell'] ?? 0);
+                if ($buy <= 0 || $sell <= 0) {
+                    continue;
+                }
+
+                $activeCodes[] = $code;
+                $existing = ExchangeRate::query()->where('currency_code', $code)->first();
+                $previousMid = $existing
+                    ? (((float) $existing->buy_rate + (float) $existing->sell_rate) / 2)
+                    : null;
+
+                $change = null;
+                if ($previousMid !== null && $previousMid > 0) {
+                    $newMid = ($buy + $sell) / 2;
+                    $change = round((($newMid - $previousMid) / $previousMid) * 100, 4);
+                }
+
+                ExchangeRate::query()->updateOrCreate(
+                    ['currency_code' => $code],
+                    [
+                        'currency_name' => $names[$code] ?? $code,
+                        'buy_rate' => $this->roundBoard($buy),
+                        'sell_rate' => $this->roundBoard($sell),
+                        'change_percentage' => $change,
+                        'is_active' => true,
+                        'sort_order' => (int) ($priority[$code] ?? (1000 + ord($code[0]))),
+                        'source' => $source,
+                    ],
+                );
+
+                $updated++;
+            }
+
+            if ($activeCodes !== []) {
+                ExchangeRate::query()
+                    ->whereNotIn('currency_code', $activeCodes)
+                    ->update(['is_active' => false]);
+            }
+        });
+
+        return $updated;
+    }
+
+    /**
+     * @param  array<string, float|int|string>  $rates
+     */
+    private function persistMidRates(array $rates, string $source): int
+    {
         $quoteUnit = max(1, (int) config('exchange.live.quote_unit', 100));
         $buySpread = max(0, (float) config('exchange.live.buy_spread_percent', 0.35)) / 100;
         $sellSpread = max(0, (float) config('exchange.live.sell_spread_percent', 0.35)) / 100;
         $priority = config('exchange.live.priority', []);
         $names = config('exchange.currency_names', []);
-        $source = (string) ($payload['source'] ?? 'live');
         $updated = 0;
         $activeCodes = [];
 
         DB::transaction(function () use (
-            $payload,
+            $rates,
             $quoteUnit,
             $buySpread,
             $sellSpread,
@@ -103,10 +192,9 @@ class SyncExchangeRatesService
             &$updated,
             &$activeCodes,
         ) {
-            // Never keep IQD as a listed currency.
             ExchangeRate::query()->where('currency_code', 'IQD')->delete();
 
-            foreach ($payload['rates'] as $code => $midPerUnit) {
+            foreach ($rates as $code => $midPerUnit) {
                 $code = strtoupper((string) $code);
                 if ($code === 'IQD') {
                     continue;
@@ -154,15 +242,7 @@ class SyncExchangeRatesService
             }
         });
 
-        $this->exchangeRateService->clearCache();
-        Cache::put(self::LAST_SYNC_CACHE_KEY, now(), $ttl * 2);
-
-        return [
-            'source' => $source,
-            'source_label' => (string) ($payload['source_label'] ?? config('exchange.live.source_label')),
-            'updated' => $updated,
-            'fetched_at' => $payload['fetched_at'] ?? now()->toIso8601String(),
-        ];
+        return $updated;
     }
 
     private function roundBoard(float $value): float

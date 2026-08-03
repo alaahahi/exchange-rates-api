@@ -17,7 +17,7 @@ class ExchangeRateService
             app(SyncExchangeRatesService::class)->syncIfStale();
         }
 
-        $ttl = (int) config('exchange.cache_ttl', 60);
+        $ttl = (int) config('exchange.cache_ttl', 120);
 
         return Cache::remember(self::CACHE_KEY, $ttl, function () {
             return ExchangeRate::query()
@@ -38,7 +38,7 @@ class ExchangeRateService
     public function sourceMeta(): array
     {
         $usd = ExchangeRate::query()->where('currency_code', 'USD')->first();
-        $providerKey = (string) config('exchange.live.provider', 'open_er_api');
+        $providerKey = (string) config('exchange.live.provider', 'qamar');
         $provider = config('exchange.providers.'.$providerKey, []);
         $last = Cache::get(SyncExchangeRatesService::LAST_SYNC_CACHE_KEY);
 
@@ -46,6 +46,7 @@ class ExchangeRateService
             'source' => $usd?->source ?? ($provider['source_key'] ?? null),
             'source_label' => $provider['source_label'] ?? config('exchange.live.source_label'),
             'live_enabled' => (bool) config('exchange.live.enabled', true),
+            'cache_ttl' => (int) config('exchange.cache_ttl', 120),
             'last_synced_at' => $last ? (is_string($last) ? $last : $last->toIso8601String()) : null,
         ];
     }

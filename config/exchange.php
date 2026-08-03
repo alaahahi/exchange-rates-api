@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'cache_ttl' => (int) env('EXCHANGE_RATES_CACHE_TTL', 60),
-    'gold_cache_ttl' => (int) env('GOLD_RATES_CACHE_TTL', env('EXCHANGE_RATES_CACHE_TTL', 60)),
+    'cache_ttl' => (int) env('EXCHANGE_RATES_CACHE_TTL', 120),
+    'gold_cache_ttl' => (int) env('GOLD_RATES_CACHE_TTL', env('EXCHANGE_RATES_CACHE_TTL', 120)),
 
     'market_timezone' => env('MARKET_TIMEZONE', 'Asia/Baghdad'),
     'market_open_hour' => (int) env('MARKET_OPEN_HOUR', 9),
@@ -16,19 +16,18 @@ return [
     |--------------------------------------------------------------------------
     | Live rate source
     |--------------------------------------------------------------------------
-    | Syncs ALL foreign currencies from the provider (IQD is quote currency only —
-    | never listed as a row). Board quotes are per quote_unit (default 100).
+    | Default: Qamar Al-Fajr board (buy/sell as published). IQD row on that board
+    | is treated as USD/IQD. Open ER API remains available as a fallback provider.
     */
     'live' => [
-        'enabled' => filter_var(env('EXCHANGE_LIVE_ENABLED', false), FILTER_VALIDATE_BOOL),
-        'provider' => env('EXCHANGE_RATE_PROVIDER', 'open_er_api'),
-        'sync_ttl' => (int) env('EXCHANGE_LIVE_SYNC_TTL', 300),
+        'enabled' => filter_var(env('EXCHANGE_LIVE_ENABLED', true), FILTER_VALIDATE_BOOL),
+        'provider' => env('EXCHANGE_RATE_PROVIDER', 'qamar'),
+        'sync_ttl' => (int) env('EXCHANGE_LIVE_SYNC_TTL', 120),
         'http_timeout' => (int) env('EXCHANGE_LIVE_HTTP_TIMEOUT', 12),
         'quote_unit' => (int) env('EXCHANGE_QUOTE_UNIT', 100),
-        'buy_spread_percent' => (float) env('EXCHANGE_BUY_SPREAD_PERCENT', 0.35),
-        'sell_spread_percent' => (float) env('EXCHANGE_SELL_SPREAD_PERCENT', 0.35),
-        'source_label' => env('EXCHANGE_SOURCE_LABEL', 'ExchangeRate-API'),
-        // Lower = higher in the list. Unlisted codes sort after these.
+        'buy_spread_percent' => (float) env('EXCHANGE_BUY_SPREAD_PERCENT', 0),
+        'sell_spread_percent' => (float) env('EXCHANGE_SELL_SPREAD_PERCENT', 0),
+        'source_label' => env('EXCHANGE_SOURCE_LABEL', 'قمر الفجر للصيرفة'),
         'priority' => [
             'USD' => 1,
             'EUR' => 2,
@@ -47,10 +46,18 @@ return [
             'CNY' => 15,
             'INR' => 16,
             'IRR' => 17,
+            'NOK' => 18,
+            'SEK' => 19,
+            'DKK' => 20,
         ],
     ],
 
     'providers' => [
+        'qamar' => [
+            'base_url' => env('QAMAR_RATES_URL', 'https://qamaralfajr.com/production/exchange_rates.php'),
+            'source_key' => 'qamaralfajr.com',
+            'source_label' => env('EXCHANGE_SOURCE_LABEL', 'قمر الفجر للصيرفة'),
+        ],
         'open_er_api' => [
             'base_url' => env('OPEN_ER_API_URL', 'https://open.er-api.com/v6/latest/USD'),
             'source_key' => 'open.er-api.com',

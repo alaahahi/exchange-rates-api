@@ -5,13 +5,16 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ExchangeRate;
 use App\Models\GoldRate;
+use App\Services\ExchangeRateService;
 use App\Services\MarketSummaryService;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function __invoke(MarketSummaryService $marketSummary): View
-    {
+    public function __invoke(
+        MarketSummaryService $marketSummary,
+        ExchangeRateService $exchangeRateService,
+    ): View {
         return view('admin.dashboard', [
             'exchangeCount' => ExchangeRate::query()->count(),
             'activeExchangeCount' => ExchangeRate::query()->active()->count(),
@@ -19,6 +22,7 @@ class DashboardController extends Controller
             'activeGoldCount' => GoldRate::query()->active()->count(),
             'usd' => ExchangeRate::query()->where('currency_code', 'USD')->first(),
             'market' => $marketSummary->getSummary(),
+            'sourceMeta' => $exchangeRateService->sourceMeta(),
             'latestExchangeUpdate' => ExchangeRate::query()->max('updated_at'),
             'latestGoldUpdate' => GoldRate::query()->max('updated_at'),
         ]);
