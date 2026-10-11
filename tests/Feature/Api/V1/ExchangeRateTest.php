@@ -41,12 +41,25 @@ class ExchangeRateTest extends TestCase
     {
         config([
             'exchange.live.enabled' => true,
+            'exchange.live.provider' => 'iraqsm',
             'exchange.live.sync_ttl' => 1,
-            'exchange.live.buy_spread_percent' => 0.35,
-            'exchange.live.sell_spread_percent' => 0.35,
+            'exchange.live.buy_spread_percent' => 0,
+            'exchange.live.sell_spread_percent' => 0,
         ]);
 
         Http::fake([
+            'iraqsm.com/*' => Http::response([
+                'kind' => 'fx',
+                'asOf' => '2026-10-10',
+                'unit' => 'IQD per 1 USD',
+                'parallel' => [
+                    'buy' => 1640,
+                    'sell' => 1641,
+                    'stale' => false,
+                    'publishedAt' => '2026-10-10T12:14:47.000Z',
+                ],
+                'official' => ['cbi' => 1510, 'confirmed' => '2026-10-07'],
+            ], 200),
             'open.er-api.com/*' => Http::response([
                 'result' => 'success',
                 'provider' => 'https://www.exchangerate-api.com',
@@ -73,14 +86,15 @@ class ExchangeRateTest extends TestCase
 
         $usd = ExchangeRate::query()->where('currency_code', 'USD')->first();
         $this->assertNotNull($usd);
-        $this->assertSame('open.er-api.com', $usd->source);
-        $this->assertEqualsWithDelta(130541, (float) $usd->buy_rate, 1);
+        $this->assertSame('iraqsm.com', $usd->source);
+        $this->assertEqualsWithDelta(164000, (float) $usd->buy_rate, 1);
+        $this->assertEqualsWithDelta(164100, (float) $usd->sell_rate, 1);
 
         config(['exchange.live.enabled' => false]);
 
         $response = $this->getJson('/api/v1/exchange-rates');
         $response->assertOk()
-            ->assertJsonPath('meta.source', 'open.er-api.com');
+            ->assertJsonPath('meta.source', 'iraqsm.com');
 
         $codes = collect($response->json('data'))->pluck('currency');
         $this->assertTrue($codes->contains('JPY'));

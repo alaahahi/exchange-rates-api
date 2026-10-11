@@ -16,18 +16,19 @@ return [
     |--------------------------------------------------------------------------
     | Live rate source
     |--------------------------------------------------------------------------
-    | Default: Qamar Al-Fajr board (buy/sell as published). IQD row on that board
-    | is treated as USD/IQD. Open ER API remains available as a fallback provider.
+    | Default: iraqsm.com Baghdad parallel USD (buy/sell) + open.er-api crosses.
+    | Qamar Al-Fajr remains available if its board returns. Open ER API is a
+    | mid-market fallback (not parallel-market).
     */
     'live' => [
         'enabled' => filter_var(env('EXCHANGE_LIVE_ENABLED', true), FILTER_VALIDATE_BOOL),
-        'provider' => env('EXCHANGE_RATE_PROVIDER', 'qamar'),
+        'provider' => env('EXCHANGE_RATE_PROVIDER', 'iraqsm'),
         'sync_ttl' => (int) env('EXCHANGE_LIVE_SYNC_TTL', 120),
         'http_timeout' => (int) env('EXCHANGE_LIVE_HTTP_TIMEOUT', 12),
         'quote_unit' => (int) env('EXCHANGE_QUOTE_UNIT', 100),
         'buy_spread_percent' => (float) env('EXCHANGE_BUY_SPREAD_PERCENT', 0),
         'sell_spread_percent' => (float) env('EXCHANGE_SELL_SPREAD_PERCENT', 0),
-        'source_label' => env('EXCHANGE_SOURCE_LABEL', 'قمر الفجر للصيرفة'),
+        'source_label' => env('EXCHANGE_SOURCE_LABEL', 'سوق بغداد الموازي (iraqsm)'),
         'priority' => [
             'USD' => 1,
             'EUR' => 2,
@@ -53,10 +54,16 @@ return [
     ],
 
     'providers' => [
+        'iraqsm' => [
+            'fx_url' => env('IRAQSM_FX_URL', 'https://iraqsm.com/data/fx.json'),
+            'cross_rates_url' => env('OPEN_ER_API_URL', 'https://open.er-api.com/v6/latest/USD'),
+            'source_key' => 'iraqsm.com',
+            'source_label' => env('EXCHANGE_SOURCE_LABEL', 'سوق بغداد الموازي (iraqsm)'),
+        ],
         'qamar' => [
             'base_url' => env('QAMAR_RATES_URL', 'https://qamaralfajr.com/production/exchange_rates.php'),
             'source_key' => 'qamaralfajr.com',
-            'source_label' => env('EXCHANGE_SOURCE_LABEL', 'قمر الفجر للصيرفة'),
+            'source_label' => 'قمر الفجر للصيرفة',
         ],
         'open_er_api' => [
             'base_url' => env('OPEN_ER_API_URL', 'https://open.er-api.com/v6/latest/USD'),

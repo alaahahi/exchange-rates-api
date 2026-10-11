@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Contracts\ExchangeRateProvider;
 use App\Models\ExchangeRate;
+use App\Services\RateProviders\IraqSmProvider;
 use App\Services\RateProviders\OpenErApiProvider;
 use App\Services\RateProviders\QamarAlFajrProvider;
 use Illuminate\Support\Facades\Cache;
@@ -24,9 +25,10 @@ class SyncExchangeRatesService
 
     public function provider(): ExchangeRateProvider
     {
-        $name = (string) config('exchange.live.provider', 'qamar');
+        $name = (string) config('exchange.live.provider', 'iraqsm');
 
         return match ($name) {
+            'iraqsm' => app(IraqSmProvider::class),
             'qamar' => app(QamarAlFajrProvider::class),
             'open_er_api' => app(OpenErApiProvider::class),
             default => throw new InvalidArgumentException("Unknown exchange rate provider [{$name}]."),
