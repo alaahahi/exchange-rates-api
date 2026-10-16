@@ -64,7 +64,7 @@ class ExchangeRateTest extends TestCase
 
                 return Http::response([
                     'value' => $map[$id] ?? 0,
-                    'created_at' => '2026-10-13 13:00:13',
+                    'created_at' => now()->format('Y-m-d H:i:s'),
                 ], 200);
             }
 

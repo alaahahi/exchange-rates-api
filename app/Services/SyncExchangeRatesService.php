@@ -138,6 +138,7 @@ class SyncExchangeRatesService
         }
 
         $source = (string) ($payload['source'] ?? 'live');
+        $requestedLocation = $location;
         $location = (string) ($payload['location'] ?? $location);
         $updated = 0;
 
@@ -145,6 +146,21 @@ class SyncExchangeRatesService
             $updated = $this->persistBoardRates($payload['board_rates'], $source, $location);
         } else {
             $updated = $this->persistMidRates($payload['rates'] ?? [], $source, $location);
+        }
+
+        // If we fell back to Erbil, retire the stale governorate board so the UI
+        // cannot keep serving an old Baghdad quote.
+        $fallbackFrom = $payload['fallback_from'] ?? null;
+        if (is_string($fallbackFrom) && $fallbackFrom !== '' && $fallbackFrom !== $location) {
+            ExchangeRate::query()
+                ->where('location', $fallbackFrom)
+                ->update(['is_active' => false]);
+            $this->exchangeRateService->clearCache($fallbackFrom);
+        } elseif ($requestedLocation !== $location) {
+            ExchangeRate::query()
+                ->where('location', $requestedLocation)
+                ->update(['is_active' => false]);
+            $this->exchangeRateService->clearCache($requestedLocation);
         }
 
         $this->exchangeRateService->clearCache($location);

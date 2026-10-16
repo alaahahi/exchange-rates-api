@@ -3,6 +3,7 @@
 namespace App\Services\RateProviders;
 
 use App\Contracts\ExchangeRateProvider;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -40,7 +41,38 @@ class DinarLiveProvider implements ExchangeRateProvider
     public function fetchForLocation(?string $location = null): array
     {
         $config = config('exchange.providers.dinarlive', []);
-        $location = $this->resolveLocation($location);
+        $requested = $this->resolveLocation($location);
+        $fallback = $this->defaultLocation();
+        $maxAgeDays = max(1, (int) ($config['max_age_days'] ?? 2));
+
+        try {
+            return $this->fetchFreshBoard($requested, $config, $maxAgeDays);
+        } catch (\Throwable $e) {
+            if ($requested === $fallback) {
+                throw $e;
+            }
+
+            // Stale/missing governorate boards (often Baghdad) fall back to Erbil.
+            $board = $this->fetchFreshBoard($fallback, $config, $maxAgeDays);
+            $board['fallback_from'] = $requested;
+
+            return $board;
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     * @return array{
+     *   source: string,
+     *   source_label: string,
+     *   fetched_at: string,
+     *   location: string,
+     *   rates: array<string, float>,
+     *   board_rates: array<string, array{buy: float, sell: float}>
+     * }
+     */
+    private function fetchFreshBoard(string $location, array $config, int $maxAgeDays): array
+    {
         $timeout = (int) config('exchange.live.http_timeout', 12);
         $baseUrl = rtrim((string) ($config['base_url'] ?? 'https://dinarlive.com/api/v2/get-price'), '?');
         $crossUrl = (string) ($config['cross_rates_url'] ?? config('exchange.providers.open_er_api.base_url'));
@@ -63,6 +95,11 @@ class DinarLiveProvider implements ExchangeRateProvider
                 continue;
             }
 
+            $created = $payload['created_at'] ?? null;
+            if (is_string($created) && $created !== '' && $this->isStaleTimestamp($created, $maxAgeDays)) {
+                continue;
+            }
+
             $buy = $value * (1 - $buySpread);
             $sell = $value * (1 + $sellSpread);
             if ($sell < $buy) {
@@ -74,7 +111,6 @@ class DinarLiveProvider implements ExchangeRateProvider
                 'sell' => $sell,
             ];
 
-            $created = $payload['created_at'] ?? null;
             if (is_string($created) && ($latestAt === null || $created > $latestAt)) {
                 $latestAt = $created;
             }
@@ -83,7 +119,7 @@ class DinarLiveProvider implements ExchangeRateProvider
         }
 
         if ($boardRates === [] || ! isset($boardRates['USD'])) {
-            throw new RuntimeException("Dinarlive returned no USD rate for [{$location}].");
+            throw new RuntimeException("Dinarlive returned no fresh USD rate for [{$location}].");
         }
 
         $usdMid = (((float) $boardRates['USD']['buy'] + (float) $boardRates['USD']['sell']) / 2);
@@ -212,5 +248,16 @@ class DinarLiveProvider implements ExchangeRateProvider
         }
 
         return $rates;
+    }
+
+    private function isStaleTimestamp(string $createdAt, int $maxAgeDays): bool
+    {
+        try {
+            $created = CarbonImmutable::parse($createdAt, config('exchange.market_timezone', 'Asia/Baghdad'));
+        } catch (\Throwable) {
+            return true;
+        }
+
+        return $created->lt(now(config('exchange.market_timezone', 'Asia/Baghdad'))->subDays($maxAgeDays));
     }
 }

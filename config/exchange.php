@@ -60,6 +60,8 @@ return [
             'source_key' => 'dinarlive.com',
             'source_label' => env('EXCHANGE_SOURCE_LABEL', 'Dinarlive'),
             'default_location' => env('EXCHANGE_LOCATION', 'erbil'),
+            // Ignore Dinarlive quotes older than this (Baghdad/others are often months stale).
+            'max_age_days' => (int) env('DINARLIVE_MAX_AGE_DAYS', 2),
             'locations' => [
                 'erbil' => 'أربيل',
                 'baghdad' => 'بغداد',

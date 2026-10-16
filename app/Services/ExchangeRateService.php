@@ -36,6 +36,11 @@ class ExchangeRateService
             $usd = $rates->firstWhere('currency_code', 'USD');
             // Old iraqsm rows were copied into every location — force real Dinarlive board.
             $needsResync = ! $usd || (string) $usd->source !== 'dinarlive.com';
+            if (! $needsResync && $usd && $location !== $sync->defaultLocation()) {
+                $maxAgeDays = max(1, (int) config('exchange.providers.dinarlive.max_age_days', 2));
+                $needsResync = $usd->updated_at === null
+                    || $usd->updated_at->lt(now()->subDays($maxAgeDays));
+            }
         }
 
         if ($needsResync && config('exchange.live.enabled', true)) {
@@ -54,11 +59,40 @@ class ExchangeRateService
             });
         }
 
+        // If a non-default governorate is still empty/stale, serve Erbil instead.
+        $defaultLocation = $sync->defaultLocation();
+        if ($location !== $defaultLocation && $this->shouldFallbackToDefault($rates, $defaultLocation)) {
+            $rates = Cache::remember($this->cacheKey($defaultLocation), $ttl, function () use ($defaultLocation) {
+                return ExchangeRate::query()
+                    ->forLocation($defaultLocation)
+                    ->active()
+                    ->ordered()
+                    ->get();
+            });
+        }
+
         if (! $tenant || ! $tenant->usesCustomPrices()) {
             return $rates;
         }
 
         return $this->applyTenantOverrides($rates, $tenant);
+    }
+
+    private function shouldFallbackToDefault(Collection $rates, string $defaultLocation): bool
+    {
+        if ($rates->isEmpty()) {
+            return true;
+        }
+
+        $usd = $rates->firstWhere('currency_code', 'USD');
+        if (! $usd || (string) $usd->source !== 'dinarlive.com') {
+            return true;
+        }
+
+        $maxAgeDays = max(1, (int) config('exchange.providers.dinarlive.max_age_days', 2));
+
+        return $usd->updated_at === null
+            || $usd->updated_at->lt(now()->subDays($maxAgeDays));
     }
 
     public function clearCache(?string $location = null): void
