@@ -78,6 +78,8 @@ class DinarLiveProvider implements ExchangeRateProvider
         $crossUrl = (string) ($config['cross_rates_url'] ?? config('exchange.providers.open_er_api.base_url'));
         $buySpread = max(0, (float) config('exchange.live.buy_spread_percent', 0)) / 100;
         $sellSpread = max(0, (float) config('exchange.live.sell_spread_percent', 0)) / 100;
+        // Dinarlive publishes one mid quote; apply a cash-desk gap like shipping.
+        $boardSpreadIqd = max(0, (float) config('exchange.live.board_spread_iqd', 150));
 
         $boardRates = [];
         $latestAt = null;
@@ -100,11 +102,7 @@ class DinarLiveProvider implements ExchangeRateProvider
                 continue;
             }
 
-            $buy = $value * (1 - $buySpread);
-            $sell = $value * (1 + $sellSpread);
-            if ($sell < $buy) {
-                $sell = $buy;
-            }
+            [$buy, $sell] = $this->splitMidToBuySell($value, $buySpread, $sellSpread, $boardSpreadIqd);
 
             $boardRates[$code] = [
                 'buy' => $buy,
@@ -259,5 +257,26 @@ class DinarLiveProvider implements ExchangeRateProvider
         }
 
         return $created->lt(now(config('exchange.market_timezone', 'Asia/Baghdad'))->subDays($maxAgeDays));
+    }
+
+    /**
+     * @return array{0: float, 1: float}
+     */
+    private function splitMidToBuySell(float $mid, float $buySpreadPct, float $sellSpreadPct, float $boardSpreadIqd): array
+    {
+        if ($buySpreadPct > 0 || $sellSpreadPct > 0) {
+            $buy = $mid * (1 - $buySpreadPct);
+            $sell = $mid * (1 + $sellSpreadPct);
+        } else {
+            $half = $boardSpreadIqd / 2;
+            $buy = $mid - $half;
+            $sell = $mid + $half;
+        }
+
+        if ($sell < $buy) {
+            $sell = $buy;
+        }
+
+        return [$buy, $sell];
     }
 }

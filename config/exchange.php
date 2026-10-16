@@ -28,6 +28,9 @@ return [
         'quote_unit' => (int) env('EXCHANGE_QUOTE_UNIT', 100),
         'buy_spread_percent' => (float) env('EXCHANGE_BUY_SPREAD_PERCENT', 0),
         'sell_spread_percent' => (float) env('EXCHANGE_SELL_SPREAD_PERCENT', 0),
+        // Absolute IQD gap (sell - buy) on the per-100 board when the provider
+        // returns a single mid price (Dinarlive). Shipping Qamar boards ~150.
+        'board_spread_iqd' => (float) env('EXCHANGE_BOARD_SPREAD_IQD', 150),
         'source_label' => env('EXCHANGE_SOURCE_LABEL', 'Dinarlive — أربيل'),
         'priority' => [
             'USD' => 1,

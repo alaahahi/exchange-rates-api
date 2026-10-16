@@ -47,6 +47,7 @@ class ExchangeRateTest extends TestCase
             'exchange.live.sync_ttl' => 1,
             'exchange.live.buy_spread_percent' => 0,
             'exchange.live.sell_spread_percent' => 0,
+            'exchange.live.board_spread_iqd' => 150,
         ]);
 
         Http::fake(function (\Illuminate\Http\Client\Request $request) {
@@ -105,7 +106,9 @@ class ExchangeRateTest extends TestCase
             ->first();
         $this->assertNotNull($usd);
         $this->assertSame('dinarlive.com', $usd->source);
-        $this->assertEqualsWithDelta(166000, (float) $usd->buy_rate, 1);
+        $this->assertEqualsWithDelta(165925, (float) $usd->buy_rate, 1);
+        $this->assertEqualsWithDelta(166075, (float) $usd->sell_rate, 1);
+        $this->assertEqualsWithDelta(150, (float) $usd->sell_rate - (float) $usd->buy_rate, 1);
 
         config(['exchange.live.enabled' => false]);
 
