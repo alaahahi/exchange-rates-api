@@ -32,8 +32,11 @@ class MarketSummaryService
         $isOpenHour = $hour >= $openHour && $hour < $closeHour;
         $isOpen = $isOpenDay && $isOpenHour;
 
+        $location = app(SyncExchangeRatesService::class)->defaultLocation();
+
         $usd = ExchangeRate::query()
             ->active()
+            ->forLocation($location)
             ->where('currency_code', 'USD')
             ->first();
 

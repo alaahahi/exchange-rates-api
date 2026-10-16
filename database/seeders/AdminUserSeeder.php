@@ -14,6 +14,8 @@ class AdminUserSeeder extends Seeder
             [
                 'name' => 'مدير النظام',
                 'password' => 'password',
+                'role' => User::ROLE_PLATFORM_ADMIN,
+                'tenant_id' => null,
                 'email_verified_at' => now(),
             ],
         );

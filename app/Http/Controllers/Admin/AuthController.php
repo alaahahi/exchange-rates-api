@@ -32,7 +32,12 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('admin.dashboard'));
+        $user = Auth::user();
+        $home = $user && $user->isTenantAdmin()
+            ? route('admin.office.edit')
+            : route('admin.dashboard');
+
+        return redirect()->intended($home);
     }
 
     public function destroy(Request $request): RedirectResponse

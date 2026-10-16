@@ -62,6 +62,10 @@
             <p class="muted" style="margin:0.4rem 0 0;font-size:0.8rem;">{{ $market['local_time'] ?? '' }} · {{ $market['timezone'] ?? '' }}</p>
         </div>
         <div class="card">
+            <p class="label">المكاتب</p>
+            <p class="value">{{ $tenantCount ?? 0 }}</p>
+        </div>
+        <div class="card">
             <p class="label">آخر تحديث للصرف</p>
             <p class="value" style="font-size:1rem;">{{ $latestExchangeUpdate ?: '—' }}</p>
         </div>
@@ -76,10 +80,11 @@
         <div class="row-actions" style="margin-top:0.75rem;flex-wrap:wrap;">
             <a class="btn" href="{{ route('admin.exchange-rates.index') }}">تعديل أسعار الصرف</a>
             <a class="btn btn-ghost" href="{{ route('admin.gold-rates.index') }}">تعديل أسعار الذهب</a>
-                <a class="btn btn-ghost" href="{{ route('admin.users.index') }}">المستخدمون</a>
-                @if (Route::has('admin.settings.index'))
-                    <a class="btn btn-ghost" href="{{ route('admin.settings.index') }}">الإعدادات</a>
-                @endif
-            </div>
+            <a class="btn btn-ghost" href="{{ route('admin.tenants.index') }}">المكاتب</a>
+            <a class="btn btn-ghost" href="{{ route('admin.users.index') }}">المستخدمون</a>
+            @if (Route::has('admin.settings.index'))
+                <a class="btn btn-ghost" href="{{ route('admin.settings.index') }}">الإعدادات</a>
+            @endif
         </div>
+    </div>
 @endsection

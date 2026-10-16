@@ -4,11 +4,13 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\ExchangeRateController;
 use App\Http\Controllers\Api\V1\GoldRateController;
 use App\Http\Controllers\Api\V1\MarketSummaryController;
+use App\Http\Controllers\Api\V1\SiteController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')
     ->middleware('throttle:api')
     ->group(function () {
+        Route::get('/site', [SiteController::class, 'show']);
         Route::get('/exchange-rates', [ExchangeRateController::class, 'index']);
         Route::get('/gold-rates', [GoldRateController::class, 'index']);
         Route::get('/market-summary', [MarketSummaryController::class, 'show']);

@@ -4,7 +4,9 @@ use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ExchangeRateController;
 use App\Http\Controllers\Admin\GoldRateController;
+use App\Http\Controllers\Admin\OfficeController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\TenantController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,19 +21,31 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
         Route::get('/', DashboardController::class)->name('dashboard');
-        Route::get('/exchange-rates', [ExchangeRateController::class, 'index'])->name('exchange-rates.index');
-        Route::put('/exchange-rates/{exchangeRate}', [ExchangeRateController::class, 'update'])->name('exchange-rates.update');
-        Route::get('/gold-rates', [GoldRateController::class, 'index'])->name('gold-rates.index');
-        Route::put('/gold-rates/{goldRate}', [GoldRateController::class, 'update'])->name('gold-rates.update');
 
-        Route::get('/users', [UserController::class, 'index'])->name('users.index');
-        Route::post('/users', [UserController::class, 'store'])->name('users.store');
-        Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
-        Route::put('/users/{user}/password', [UserController::class, 'updatePassword'])->name('users.password');
-        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+        Route::get('/office', [OfficeController::class, 'edit'])->name('office.edit');
+        Route::put('/office', [OfficeController::class, 'update'])->name('office.update');
+        Route::put('/office/rates', [OfficeController::class, 'updateRates'])->name('office.rates');
 
-        Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
-        Route::post('/settings/migrate', [SettingsController::class, 'migrate'])->name('settings.migrate');
-        Route::post('/settings/logs/clear', [SettingsController::class, 'clearLogs'])->name('settings.logs.clear');
+        Route::middleware('platform.admin')->group(function () {
+            Route::get('/exchange-rates', [ExchangeRateController::class, 'index'])->name('exchange-rates.index');
+            Route::put('/exchange-rates/{exchangeRate}', [ExchangeRateController::class, 'update'])->name('exchange-rates.update');
+            Route::get('/gold-rates', [GoldRateController::class, 'index'])->name('gold-rates.index');
+            Route::put('/gold-rates/{goldRate}', [GoldRateController::class, 'update'])->name('gold-rates.update');
+
+            Route::get('/tenants', [TenantController::class, 'index'])->name('tenants.index');
+            Route::post('/tenants', [TenantController::class, 'store'])->name('tenants.store');
+            Route::put('/tenants/{tenant}', [TenantController::class, 'update'])->name('tenants.update');
+            Route::delete('/tenants/{tenant}', [TenantController::class, 'destroy'])->name('tenants.destroy');
+
+            Route::get('/users', [UserController::class, 'index'])->name('users.index');
+            Route::post('/users', [UserController::class, 'store'])->name('users.store');
+            Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+            Route::put('/users/{user}/password', [UserController::class, 'updatePassword'])->name('users.password');
+            Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+            Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+            Route::post('/settings/migrate', [SettingsController::class, 'migrate'])->name('settings.migrate');
+            Route::post('/settings/logs/clear', [SettingsController::class, 'clearLogs'])->name('settings.logs.clear');
+        });
     });
 });

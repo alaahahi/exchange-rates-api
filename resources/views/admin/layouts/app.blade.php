@@ -177,12 +177,17 @@
                 </div>
             </a>
             <nav class="nav" aria-label="Admin">
-                <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'is-active' : '' }}">الرئيسية</a>
-                <a href="{{ route('admin.exchange-rates.index') }}" class="{{ request()->routeIs('admin.exchange-rates.*') ? 'is-active' : '' }}">أسعار الصرف</a>
-                <a href="{{ route('admin.gold-rates.index') }}" class="{{ request()->routeIs('admin.gold-rates.*') ? 'is-active' : '' }}">الذهب</a>
-                <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'is-active' : '' }}">المستخدمون</a>
-                @if (Route::has('admin.settings.index'))
-                    <a href="{{ route('admin.settings.index') }}" class="{{ request()->routeIs('admin.settings.*') ? 'is-active' : '' }}">الإعدادات</a>
+                @if (auth()->user()?->isPlatformAdmin())
+                    <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'is-active' : '' }}">الرئيسية</a>
+                    <a href="{{ route('admin.exchange-rates.index') }}" class="{{ request()->routeIs('admin.exchange-rates.*') ? 'is-active' : '' }}">أسعار الصرف</a>
+                    <a href="{{ route('admin.gold-rates.index') }}" class="{{ request()->routeIs('admin.gold-rates.*') ? 'is-active' : '' }}">الذهب</a>
+                    <a href="{{ route('admin.tenants.index') }}" class="{{ request()->routeIs('admin.tenants.*') ? 'is-active' : '' }}">المكاتب</a>
+                    <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'is-active' : '' }}">المستخدمون</a>
+                    @if (Route::has('admin.settings.index'))
+                        <a href="{{ route('admin.settings.index') }}" class="{{ request()->routeIs('admin.settings.*') ? 'is-active' : '' }}">الإعدادات</a>
+                    @endif
+                @else
+                    <a href="{{ route('admin.office.edit') }}" class="{{ request()->routeIs('admin.office.*') ? 'is-active' : '' }}">مكتبي</a>
                 @endif
                 <form method="POST" action="{{ route('admin.logout') }}">
                     @csrf

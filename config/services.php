@@ -43,4 +43,8 @@ return [
         'embed_url' => env('GA_EMBED_URL', ''),
     ],
 
+    'frontend' => [
+        'url' => env('FRONTEND_URL', 'https://dinar-now.com'),
+    ],
+
 ];

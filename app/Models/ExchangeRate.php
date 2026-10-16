@@ -9,6 +9,7 @@ class ExchangeRate extends Model
 {
     protected $fillable = [
         'currency_code',
+        'location',
         'currency_name',
         'buy_rate',
         'sell_rate',
@@ -32,6 +33,11 @@ class ExchangeRate extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
+    }
+
+    public function scopeForLocation(Builder $query, string $location): Builder
+    {
+        return $query->where('location', $location);
     }
 
     public function scopeOrdered(Builder $query): Builder

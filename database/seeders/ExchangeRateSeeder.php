@@ -36,9 +36,14 @@ class ExchangeRateSeeder extends Seeder
 
         ExchangeRate::query()->where('currency_code', 'IQD')->delete();
 
+        $location = (string) config('exchange.live.location', 'erbil');
+
         foreach ($rates as $rate) {
             ExchangeRate::query()->updateOrCreate(
-                ['currency_code' => $rate['currency_code']],
+                [
+                    'currency_code' => $rate['currency_code'],
+                    'location' => $location,
+                ],
                 [
                     'currency_name' => $rate['currency_name'],
                     'buy_rate' => $rate['buy_rate'],
@@ -52,6 +57,7 @@ class ExchangeRateSeeder extends Seeder
         }
 
         ExchangeRate::query()
+            ->where('location', $location)
             ->whereNotIn('currency_code', $codes)
             ->update(['is_active' => false]);
 
