@@ -109,17 +109,31 @@ class SyncExchangeRatesService
      */
     public function sync(bool $forceRefresh = false, ?string $location = null): array
     {
-        $location = $this->normalizeLocation($location);
+        $provider = $this->provider();
         $ttl = (int) config('exchange.live.sync_ttl', 120);
-        $cacheKey = $this->rawCacheKey($location);
 
+        // Only Dinarlive has true per-governorate boards. Other providers are
+        // single-market and must not be copied into every location bucket.
+        if ($provider instanceof DinarLiveProvider) {
+            $location = $provider->resolveLocation($location);
+        } else {
+            $location = $provider instanceof IraqSmProvider
+                ? 'baghdad'
+                : $this->normalizeLocation($location);
+        }
+
+        $cacheKey = $this->rawCacheKey($location);
         $payload = $forceRefresh ? null : Cache::get($cacheKey);
 
         if (! is_array($payload)) {
-            $provider = $this->provider();
             $payload = $provider instanceof DinarLiveProvider
                 ? $provider->fetchForLocation($location)
                 : $provider->fetchMidRatesInIqd();
+
+            if (! isset($payload['location'])) {
+                $payload['location'] = $location;
+            }
+
             Cache::put($cacheKey, $payload, $ttl);
         }
 
@@ -155,13 +169,22 @@ class SyncExchangeRatesService
     {
         $synced = [];
         $failed = [];
+        $provider = $this->provider();
+
+        if (! $provider instanceof DinarLiveProvider) {
+            $result = $this->sync($forceRefresh, null);
+            $synced[] = $result['location'];
+
+            return compact('synced', 'failed');
+        }
 
         foreach ($this->locationOptions() as $option) {
             $id = $option['id'];
             try {
                 $this->sync($forceRefresh, $id);
                 $synced[] = $id;
-                usleep(250000);
+                // Dinarlive allows ~10 req/min; each location uses several calls.
+                usleep(700000);
             } catch (Throwable $e) {
                 $failed[$id] = $e->getMessage();
                 Log::warning('Governorate sync failed.', [

@@ -51,7 +51,13 @@ class DinarLiveProvider implements ExchangeRateProvider
         $latestAt = null;
 
         foreach (self::ITEM_IDS as $id => $code) {
-            $payload = $this->fetchItem($baseUrl, $id, $location, $timeout);
+            try {
+                $payload = $this->fetchItem($baseUrl, $id, $location, $timeout);
+            } catch (\Throwable $e) {
+                // Non-Erbil boards often only publish USD; skip missing pairs.
+                continue;
+            }
+
             $value = (float) ($payload['value'] ?? 0);
             if ($value <= 0) {
                 continue;
@@ -72,6 +78,8 @@ class DinarLiveProvider implements ExchangeRateProvider
             if (is_string($created) && ($latestAt === null || $created > $latestAt)) {
                 $latestAt = $created;
             }
+
+            usleep(150000);
         }
 
         if ($boardRates === [] || ! isset($boardRates['USD'])) {

@@ -31,9 +31,19 @@ class ExchangeRateService
                 ->get();
         });
 
-        // If this governorate has no rows yet, try a forced sync once.
-        if ($rates->isEmpty() && config('exchange.live.enabled', true)) {
-            $sync->syncIfStale(true, $location);
+        $needsResync = $rates->isEmpty();
+        if (! $needsResync && (string) config('exchange.live.provider') === 'dinarlive') {
+            $usd = $rates->firstWhere('currency_code', 'USD');
+            // Old iraqsm rows were copied into every location — force real Dinarlive board.
+            $needsResync = ! $usd || (string) $usd->source !== 'dinarlive.com';
+        }
+
+        if ($needsResync && config('exchange.live.enabled', true)) {
+            try {
+                $sync->sync(true, $location);
+            } catch (\Throwable) {
+                // keep whatever we have
+            }
             Cache::forget($this->cacheKey($location));
             $rates = Cache::remember($this->cacheKey($location), $ttl, function () use ($location) {
                 return ExchangeRate::query()
